@@ -8,7 +8,7 @@ from app.support import support
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return "Welcome to ShopMate!"
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
