@@ -1,3 +1,4 @@
+import os
 from flask import Flask, Blueprint, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -12,7 +13,7 @@ from flask_mail import Mail, Message
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shopmate.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'
 app.config["MAIL_SERVER"] = "live.smtp.mailtrap.io"
@@ -23,13 +24,26 @@ app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USE_SSL"] = False
 
 
-db = SQLAlchemy(app)
+# postgresql://shopmate_bwbg_user:KsZRkRdSwBtbHiJ3LVSkle5v5LHA8zMg@dpg-cqoc95dsvqrc73feukd0-a.oregon-postgres.render.com/shopmate_bwbg
+
+
+
+db.init_app(app)
+
 mail = Mail(app)
 jwt = JWTManager(app)
 cors = CORS(app)
 migrate = Migrate(app, db)
 
+
+
 app.logger.setLevel(logging.DEBUG)
+
+
+@app.route('/')
+def index():
+    return "Welcome to ShopMate!"
+
 
 
 # Create a file handler

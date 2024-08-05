@@ -1,12 +1,7 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import { BrowserRouter } from "react-router-dom";
-import "./index.css";
-import App from "./components/App";
+import axios from 'axios';
 
-ReactDOM.render(
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>,
-  document.getElementById("root")
-);
+const api = axios.create({
+  baseURL: 'http://localhost:5000', // Update to your backend URL
+});
+
+export default api;

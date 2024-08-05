@@ -1,25 +1,26 @@
-import React from "react";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import GuestHomePage from "../pages/GuestHomePage";
-import UserHomePage from "../pages/UserHomePage";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
-import Contact from "../pages/Contact";
-import { UserProvider } from "../pages/context/UserContext";
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ProductContext } from '../context/ProductContext';
+
+import { Register, Login } from './Components/Auth';
+import HomePage from './Pages/Homepage';
+import ProfilePage from './Pages/ProfilePage';
 
 function App() {
-  return (
-    <Router>
-      <UserProvider>
-        <Switch>
-          <Route exact path="/" component={GuestHomePage} />
-          <Route path="/login" component={Login} />
-          <Route path="/register" component={Register} />
-          <Route path="/user" component={UserHomePage} />
-        </Switch>
-      </UserProvider>
-    </Router>
-  );
+    return (
+        <AuthProvider>
+            <Router>
+                <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/products" component={<ProductsPage />} />
+                </Routes>
+            </Router>
+        </AuthProvider>
+    );
 }
 
 export default App;

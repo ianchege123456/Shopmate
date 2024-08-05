@@ -1,4 +1,4 @@
-# SHOPMATE-Full-Stack Application Project Template
+# SHOPMATE-APP
 
 
 ## Introduction

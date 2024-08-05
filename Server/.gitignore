@@ -1,0 +1,4 @@
+# Virtual env metadata
+.venv
+.instance
+requirements.txt
