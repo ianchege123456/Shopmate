@@ -1,4 +1,5 @@
 import os
+import sys
 from flask import Flask, Blueprint, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -23,7 +24,7 @@ app.config["MAIL_PASSWORD"] = "your_password"
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USE_SSL"] = False
 
-
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # postgresql://shopmate_bwbg_user:KsZRkRdSwBtbHiJ3LVSkle5v5LHA8zMg@dpg-cqoc95dsvqrc73feukd0-a.oregon-postgres.render.com/shopmate_bwbg
 
 
