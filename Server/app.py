@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, verify_jwt_in_request
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import  User, Product, Wishlist, Favorite, CartItem, Order, Review, SupportRequest, Category, db
+from .models import  User, Product, Wishlist, Favorite, CartItem, Order, Review, SupportRequest, Category, db
 import logging
 from datetime import datetime
 from flask_cors import CORS
@@ -24,7 +24,7 @@ app.config["MAIL_PASSWORD"] = "your_password"
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USE_SSL"] = False
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # postgresql://shopmate_bwbg_user:KsZRkRdSwBtbHiJ3LVSkle5v5LHA8zMg@dpg-cqoc95dsvqrc73feukd0-a.oregon-postgres.render.com/shopmate_bwbg
 
 
