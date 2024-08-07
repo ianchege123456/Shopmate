@@ -1,20 +1,26 @@
-import os
-import sys
+import os, sys
 from flask import Flask, Blueprint, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, verify_jwt_in_request,jwt_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import  User, Product, Wishlist, Favorite, CartItem, Order, Review, SupportRequest, Category, db
 import logging
 from datetime import datetime
 from flask_cors import CORS
 from flask_mail import Mail, Message
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 
 
 app = Flask(__name__)
+
+# Get the DATABASE_URI from the environment variable
+database_uri = os.getenv('DATABASE_URI', 'postgresql://shopmate_bwbg_user:KsZRkRdSwBtbHiJ3LVSkle5v5LHA8zMg@dpg-cqoc95dsvqrc73feukd0-a.oregon-postgres.render.com/shopmate_bwbg')
+print(f'DATABASE_URI: {database_uri}')  # Debugging line to print the database URI
+
+# Configure the SQLAlchemy part of the app instance
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("postgresql://shopmate_bwbg_user:KsZRkRdSwBtbHiJ3LVSkle5v5LHA8zMg@dpg-cqoc95dsvqrc73feukd0-a.oregon-postgres.render.com/shopmate_bwbg")
+app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'
 app.config["MAIL_SERVER"] = "live.smtp.mailtrap.io"
@@ -29,12 +35,12 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 
 db.init_app(app)
-
-
 mail = Mail(app)
 jwt = JWTManager(app)
 cors = CORS(app)
 migrate = Migrate(app, db)
+login = LoginManager(app)
+login.login_view = 'login'
 
 
 
@@ -61,8 +67,13 @@ handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 
 
-#Authentication Endpoints    
-auth_bp = Blueprint('auth_bp', __name__)
+#Authentication Endpoints
+@login.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+@app.route('/login', methods=['POST'])
 
 def jwt_required(fn):
     def wrapper(*args, **kwargs):
@@ -75,7 +86,8 @@ def jwt_required(fn):
     return wrapper
 
 def admin_required(fn):
-    def wrapper(*args, **kwargs):
+    def wrapper(fn):
+        @wraps(fn)
         @jwt_required()
         def inner_wrapper():
             current_user_id = get_jwt_identity()
@@ -84,28 +96,32 @@ def admin_required(fn):
                 return fn(*args, **kwargs)
             else:
                 return jsonify(msg="Admins only!"), 403
-        return inner_wrapper()
-    wrapper.__name__ = fn.__name__
+        return decorator
     return wrapper
+    
 
-@auth_bp.route('/register', methods=['POST'])
+@app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
     username = data['username']
+    
     email = data['email']
     password = data['password']
+    
+    if password is None:
+        return jsonify({"msg": "Password is required"}), 400    
     
     if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
         return jsonify({"msg": "User already exists"}), 400
     
     new_user = User(username=username, email=email)
-    new_user.set_password(password)
+    new_user.set_password(password)  # Set the password here
     db.session.add(new_user)
     db.session.commit()
     
     return jsonify({"msg": "User registered successfully"}), 201
 
-@auth_bp.route('/login', methods=['POST'])
+@app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data['username']
@@ -119,21 +135,14 @@ def login():
     access_token = create_access_token(identity=user.id)
     return jsonify(access_token=access_token), 200
 
-@auth_bp.route('/profile', methods=['GET'])
-@jwt_required
-def profile():
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
-    return jsonify(username=user.username, email=user.email), 200
-
-@auth_bp.route('/profile', methods=['GET'])
+@app.route('/profile', methods=['GET'])
 @jwt_required
 def get_profile():
-    user_id = get_jwt_identity()
+    current_user_id = get_jwt_identity()
     user = User.query.get(user_id)
     return jsonify(username=user.username, email=user.email, preferences=user.preferences), 200
 
-@auth_bp.route('/profile', methods=['PUT'])
+@app.route('/profile', methods=['PUT'])
 @jwt_required
 def update_profile():
     user_id = get_jwt_identity()
@@ -145,7 +154,7 @@ def update_profile():
     db.session.commit()
     return jsonify(message="Profile updated successfully"), 200
 
-@auth_bp.route('/wishlist', methods=['POST'])
+@app.route('/wishlist', methods=['POST'])
 @jwt_required
 def add_to_wishlist():
     user_id = get_jwt_identity()
@@ -155,7 +164,7 @@ def add_to_wishlist():
     db.session.commit()
     return jsonify(message="Product added to wishlist"), 201
 
-@auth_bp.route('/favorites', methods=['POST'])
+@app.route('/favorites', methods=['POST'])
 @jwt_required
 def add_to_favorites():
     user_id = get_jwt_identity()
@@ -576,7 +585,7 @@ def send_support_email(subject, message):
     mail.send(msg)
 
 # Register Blueprints
-app.register_blueprint(auth_bp, url_prefix='/auth')
+
 app.register_blueprint(product_bp, url_prefix='/products')
 app.register_blueprint(orders_bp, url_prefix='/orders')
 app.register_blueprint(carts_bp, url_prefix='/carts')
@@ -589,4 +598,4 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5555)

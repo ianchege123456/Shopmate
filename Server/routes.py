@@ -1,7 +1,14 @@
-from app import app
-from flask import render_template, redirect, url_for, flash
-from flask_login import login_required, login_user, logout_user, current_user
-from app import login, registers, products, orders, support
+from app import app, db, login 
+from models import products, orders, support, User
+from flask import Flask, render_template, redirect, url_for, flash, request
+from app.forms import LoginForm, RegisterForm
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user
+
+
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 @app.route('/')
 def index():
@@ -17,7 +24,8 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=True)
             flash('Logged in successfully!', 'success')
-            return redirect(url_for('index'))
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('index'))
         else:
             flash('Invalid username or password', 'danger')
     return render_template('login.html', form=form)
@@ -38,6 +46,7 @@ def register():
 @login_required
 def logout():
     logout_user()
+    flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
 @app.route('/products')

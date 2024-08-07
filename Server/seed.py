@@ -10,7 +10,7 @@ with app.app_context():
     db.create_all()
 
 # Add sample data
-    user = User(username='admin', email='admin@example.com', password='password')
+    user = User(username='admin', email='admin@example.com', password='Dc12345')
     db.session.add(user)
     db.session.commit()
     

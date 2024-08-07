@@ -1,11 +1,31 @@
 from flask_sqlalchemy import SQLAlchemy
+from alembic import op
+import sqlalchemy as sa
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy import ForeignKey, Column, Integer, String
 from sqlalchemy.orm import validates, relationship
 from sqlalchemy_serializer import SerializerMixin
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo
 
 db = SQLAlchemy()
+
+
+def upgrade():
+    op.alter_column('user', 'password', type_=sa.String(255))
+
+def downgrade():
+    op.alter_column('user', 'password', type_=sa.String(150))
+    
+    
+class RegisterForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Register')
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'user'
@@ -13,7 +33,7 @@ class User(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     orders = db.relationship('Order', back_populates='user', lazy=True)
     reviews = db.relationship('Review', back_populates='user', lazy=True)
@@ -24,11 +44,13 @@ class User(db.Model, SerializerMixin):
     is_admin = db.Column(db.Boolean, default=False)
         
 
-    serialize_only = ('id', 'username', 'email', 'created_at')
+    serialize_only = ('id', 'username', 'email', 'password' 'created_at')
 
     @validates('email')
     def validate_email(self, key, address):
-        assert '@' in address, "Invalid email address"
+        if '@' not in address:
+            raise ValueError("Invalid email address: must contain '@' symbol")
+
         return address
     
     @validates('username')
@@ -46,7 +68,7 @@ class User(db.Model, SerializerMixin):
         }
         
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.password = generate_password_hash(password)
     
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
