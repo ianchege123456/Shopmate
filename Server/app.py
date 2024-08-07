@@ -137,6 +137,14 @@ def login():
 
 @app.route('/profile', methods=['GET'])
 @jwt_required
+def profile():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    return jsonify(username=user.username, email=user.email), 200
+
+
+@app.route('/profile', methods=['GET'])
+@jwt_required
 def get_profile():
     current_user_id = get_jwt_identity()
     user = User.query.get(user_id)
