@@ -71,7 +71,7 @@ class User(db.Model, SerializerMixin):
         self.password = generate_password_hash(password)
     
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        return check_password_hash(self.password, password)
     
     def add_to_cart(self, product, quantity):
         cart_item = CartItem(user=self, product=product, quantity=quantity)

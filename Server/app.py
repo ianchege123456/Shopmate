@@ -2,11 +2,12 @@ import os, sys
 from flask import Flask, Blueprint, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, verify_jwt_in_request,jwt_required
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required, verify_jwt_in_request
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import  User, Product, Wishlist, Favorite, CartItem, Order, Review, SupportRequest, Category, db
 import logging
 from datetime import datetime
+from functools import wraps
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
@@ -73,38 +74,44 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-@app.route('/login', methods=['POST'])
-
 def jwt_required(fn):
+    @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            verify_jwt_in_request()
-            return fn(*args, **kwargs)
+            verify_jwt_in_request()  # Verify the JWT
+            return fn(*args, **kwargs)  # Proceed with the original function if valid
         except Exception as e:
-            return jsonify(msg=str(e)), 401
-    wrapper.__name__ = fn.__name__
+            return jsonify(msg=str(e)), 401  # Return an error if JWT is invalid
     return wrapper
 
-def admin_required(fn):
-    def wrapper(fn):
-        @wraps(fn)
-        @jwt_required()
-        def inner_wrapper():
-            current_user_id = get_jwt_identity()
-            user = User.query.get(current_user_id)
-            if user and user.is_admin:
-                return fn(*args, **kwargs)
-            else:
-                return jsonify(msg="Admins only!"), 403
-        return decorator
+@app.route('/protected', methods=['GET'])
+@jwt_required  # custom JWT decorator
+def protected_route():
+    return jsonify(msg="You have access!")
+
+def admin_required(fn):    
+    @wraps(fn)
+    @jwt_required
+    def wrapper(*args, **kwargs):
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        if user and user.is_admin:
+            return fn(*args, **kwargs)
+        else:
+            return jsonify(msg="Admins only!"), 403
     return wrapper
+
+@app.route('/admin', methods=['GET'])
+@admin_required
+def admin_dashboard():
+    return jsonify(msg="Welcome Admin!")
+
     
 
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    username = data['username']
-    
+    username = data['username']    
     email = data['email']
     password = data['password']
     
@@ -140,14 +147,6 @@ def login():
 def profile():
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)
-    return jsonify(username=user.username, email=user.email), 200
-
-
-@app.route('/profile', methods=['GET'])
-@jwt_required
-def get_profile():
-    current_user_id = get_jwt_identity()
-    user = User.query.get(user_id)
     return jsonify(username=user.username, email=user.email, preferences=user.preferences), 200
 
 @app.route('/profile', methods=['PUT'])
@@ -212,17 +211,7 @@ def monitor_system():
 product_bp = Blueprint('products_bp', __name__)
 
 # products
-@product_bp.route('/products', methods=['GET'])
-def get_products():
-    products = Product.query.all()
-    return jsonify([product.to_dict() for product in products]), 200
-
-@product_bp.route('/products/<int:id>', methods=['GET'])
-def get_product(id):
-    product = Product.query.get_or_404(id)
-    return jsonify(product.to_dict()), 200
-
-@product_bp.route('/products', methods=['POST'])
+@app.route('/products', methods=['POST'])
 @jwt_required
 def create_product():
     data = request.get_json()
@@ -236,6 +225,17 @@ def create_product():
     db.session.add(new_product)
     db.session.commit()
     return jsonify(new_product.to_dict()), 201
+
+
+@product_bp.route('/products', methods=['GET'])
+def get_products():
+    products = Product.query.all()
+    return jsonify([product.to_dict() for product in products]), 200
+
+@product_bp.route('/products/<int:id>', methods=['GET'])
+def get_product(id):
+    product = Product.query.get_or_404(id)
+    return jsonify(product.to_dict()), 200
 
 @product_bp.route('/products/<int:id>', methods=['PUT'])
 @jwt_required
