@@ -1,38 +1,57 @@
-import React, { useContext, useState } from 'react';
-import { ProductContext } from '../../context/ProductContext';
-import ProductDetail from './ProductDetail';
-import Pagination from '../Pagination';
+import React from "react";
+import "../Components/Product.css";
+import { useStateValue } from "../ContextAPI/StateProvider";
+import CurrencyFormat from "react-currency-format";
 
-const ProductList = () => {
-    const { products, loading } = useContext(ProductContext);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [productsPerPage] = useState(10);
+function Product({ id, title, image, price, rating }) {
+  const [{ basket }, dispatch] = useStateValue();
+  const addToBasket = () => {
+    //add item to basket
+    dispatch({
+      type: "ADD_TO_BASKET",
+      item: {
+        id,
+        title,
+        image,
+        price,
+        rating,
+      },
+    });
+  };
+  return (
+    <div className="product" onClick={addToBasket}>
 
-    const indexOfLastProduct = currentPage * productsPerPage;
-    const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-    const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
-
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-    if (loading) {
-        return <p>Loading...</p>;
-    }
-
-    return (
-        <div>
-            <div className="product-list">
-                {currentProducts.map(product => (                    
-                    <ProductDetail key={product.id} product={product} />
-                    
-                ))}
+      <CurrencyFormat
+        renderText={(price) => (
+          <>
+            <img src={image} alt="" />
+            <div className="product_info">
+              <p className="title">{title}</p>
+              <p className="product_price">
+                <span> </span>
+                <span>{price}</span>
+              </p>
+              <div className="product_rating">
+                {Array(rating)
+                  .fill()
+                  .map((_) => (
+                    <p>🌟</p>
+                  ))}
+              </div>
             </div>
-            <Pagination
-                productsPerPage={productsPerPage}
-                totalProducts={products.length}
-                paginate={paginate}
-            />
-        </div>
-    );
-};
+          </>
+        )}
+        decimalScale={2}
+        value={price}
+        displayType={"text"}
+        thousandSeparator={true}
+        prefix={"$: "}
+      />
+      <div className="button">
+        <p className="click_button">ADD TO CART</p>
+      </div>
+    </div>
+  );
+}
 
-export default ProductList;
+export default Product;
