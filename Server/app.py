@@ -142,6 +142,11 @@ def login():
     access_token = create_access_token(identity=user.id)
     return jsonify(access_token=access_token), 200
 
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user', None)
+    return jsonify({"message": "Logout successful"}), 200
+
 @app.route('/profile', methods=['GET'])
 @jwt_required
 def profile():
@@ -227,15 +232,84 @@ def create_product():
     return jsonify(new_product.to_dict()), 201
 
 
+
 @product_bp.route('/products', methods=['GET'])
 def get_products():
-    products = Product.query.all()
-    return jsonify([product.to_dict() for product in products]), 200
+    
+    name = request.args.get('name')
+    category = request.args.get('category')
+    min_price = request.args.get('min_price')
+    max_price = request.args.get('max_price')
+    in_stock = request.args.get('in_stock')
+    sort_by = request.args.get('sort_by')
+    
 
+    query = Product.query.get_or_404(id)
+
+    if name:
+        query = query.filter(Product.name.ilike(f'%{name}%'))
+
+    if category:
+        query = query.join(Category).filter(Category.name == category)
+
+    if min_price:
+        query = query.filter(Product.price >= float(min_price))
+
+    if max_price:
+        query = query.filter(Product.price <= float(max_price))
+
+    if in_stock:
+        query = query.filter_by(availability=True)
+
+    if sort_by == 'price':
+        query = query.order_by(Product.price.asc())
+    elif sort_by == 'rating':
+        query = query.order_by(Product.rating.desc())
+    
+    page = int(request.args.get('page', 1))
+    per_page = 10
+    pagination = query.paginate(page, per_page, False)
+    
+    products = query.all()
+    
+    products = [{
+        'id': product.id,
+        'name': product.name,
+        'description': product.description,
+        'price': product.price,
+        'availability': product.availability,
+        'rating': product.star,
+        'image_url': product.image_url,
+        'category': product.category.name
+    } for product in pagination.items]
+
+    return jsonify({
+        'products': products,
+        'total_pages': pagination.pages,
+        'current_page': pagination.page,
+        'total_products': pagination.total
+    })
+    
 @product_bp.route('/products/<int:id>', methods=['GET'])
-def get_product(id):
+def get_product_details(id):
     product = Product.query.get_or_404(id)
-    return jsonify(product.to_dict()), 200
+    reviews = [{
+        'content': review.content,
+        'rating': review.rating
+    } for review in product.reviews]
+
+    return jsonify({
+        'id': product.id,
+        'name': product.name,
+        'description': product.description,
+        'price': product.price,
+        'image_url': product.image_url,
+        'star': product.star,
+        'category': product.category.name,
+        'reviews': reviews,
+        'average_rating': sum(review['rating'] for review in reviews) / len(reviews) if reviews else None
+    })
+
 
 @product_bp.route('/products/<int:id>', methods=['PUT'])
 @jwt_required
@@ -299,10 +373,10 @@ def delete_category(id):
 
 # Reviews
 @product_bp.route('/products/<int:product_id>/reviews', methods=['POST'])
-@jwt_required
 def create_review(product_id):
+    product = Product.query.get_or_404(id)
     data = request.get_json()
-    new_review = Review(user_id=data['user_id'], product_id=product_id, rating=data['rating'], comment=data['comment'])
+    new_review = Review(user_id=data['user_id'], product_id=product_id, rating=data['rating'], comment=data['comment'], product=product)
     db.session.add(new_review)
     db.session.commit()
     return jsonify(new_review.to_dict()), 201
@@ -311,21 +385,6 @@ def create_review(product_id):
 def get_reviews(product_id):
     reviews = Review.query.filter_by(product_id=product_id).all()
     return jsonify([review.to_dict() for review in reviews]), 200
-
-@product_bp.route('/reviews', methods=['POST'])
-@jwt_required
-def submit_review():
-    data = request.get_json()
-    new_review = Review(
-        user_id=data['user_id'],
-        product_id=data['product_id'],
-        rating=data['rating'],
-        comment=data['comment']
-    )
-    db.session.add(new_review)
-    db.session.commit()
-    return jsonify(new_review.to_dict()), 201
-
 
 # Orders Blueprint
 carts_bp = Blueprint('carts_bp', __name__)

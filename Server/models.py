@@ -100,8 +100,12 @@ class Product(db.Model, SerializerMixin):
     orders = db.relationship('Order', back_populates='product', lazy=True)
     reviews = db.relationship('Review', back_populates='product', lazy=True)
     cart_items = db.relationship('CartItem', back_populates='product', lazy=True)
+    availability = db.Column(db.Boolean, default=True)
+    category = db.Column(db.String(100), nullable=False)
+    image_url = db.Column(db.String(200), nullable=False)
+    star = db.Column(db.Integer, default=0)
 
-    serialize_only = ('id', 'name', 'description', 'price', 'category_id', 'created_at')
+    serialize_only = ('id', 'name', 'description', 'price', 'category', 'created_at', 'star')
 
     @validates('name')
     def validate_name(self, key, name):
@@ -119,6 +123,9 @@ class Product(db.Model, SerializerMixin):
             'name': self.name,
             'description': self.description,
             'price': self.price,
+            'imageUrl': self.image_url,
+            'star': self.star,
+            'category': self.category,
             'created_at': self.created_at
         }
 class Category(db.Model, SerializerMixin):
@@ -127,11 +134,6 @@ class Category(db.Model, SerializerMixin):
     products = db.relationship('Product', backref='category', lazy=True)
 
     serialize_only = ('id', 'name')
-    
-    @validates('name')
-    def validate_name(self, key, name):
-        assert len(name) >= 2, "Category name must be at least 2 characters long"
-        return name
     
     
 class Wishlist(db.Model, SerializerMixin):

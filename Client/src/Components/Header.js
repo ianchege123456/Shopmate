@@ -50,7 +50,7 @@ function Header() {
       term: input,
     });
 
-    navigate("/search");
+    navigate("/search?query=${encodeURIComponent(input)}");
   }
   
     return (
