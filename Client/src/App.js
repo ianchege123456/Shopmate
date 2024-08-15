@@ -11,6 +11,9 @@ import CartPage from './Pages/CartPage';
 // import OrderPage from './Pages/OrderPage';
 import Checkout from './Components/Checkout';
 
+import Profile from './Components/Profile';
+import Support from "./Components/Support";
+import Private from './Components/PrivateRoute';
 
 function App() {
   return (
@@ -25,7 +28,9 @@ function App() {
             <Route path="/login" element={<LoginForm />} />
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/" element={<Product />}>
-            
+            <Route path='/support' element={<Support/>} />
+            <Route path='/profile' element={<Profile/>}/>
+            <Route path='*' element={<Private/>}/>
               
             </Route>
 
