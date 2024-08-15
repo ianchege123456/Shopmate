@@ -131,7 +131,7 @@ class Product(db.Model, SerializerMixin):
 class Category(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
-    products = db.relationship('Product', backref='category', lazy=True)
+    products = db.relationship('Product', back_populates='category', lazy=True)
 
     serialize_only = ('id', 'name')
     
