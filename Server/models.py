@@ -101,7 +101,7 @@ class Product(db.Model, SerializerMixin):
     reviews = db.relationship('Review', back_populates='product', lazy=True)
     cart_items = db.relationship('CartItem', back_populates='product', lazy=True)
     availability = db.Column(db.Boolean, default=True)
-    category = db.Column(db.String(100), nullable=False)
+    category = db.relationship('Category', back_populates='products')
     image_url = db.Column(db.String(200), nullable=False)
     star = db.Column(db.Integer, default=0)
 
