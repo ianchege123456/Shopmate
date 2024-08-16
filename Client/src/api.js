@@ -1,8 +1,8 @@
-const API_URL = 'https://localhost:5555';
+////////const API_URL = 'https://localhost:5555';
 
 
 export const login = async (data) => {
-    const response = await fetch(`${API_URL}/login`, {
+    const response = await fetch(`/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -18,7 +18,7 @@ export const login = async (data) => {
   };
   
   export const register = async (data) => {
-    const response = await fetch(`${API_URL}/register`, {
+    const response = await fetch(`/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ export const login = async (data) => {
   };
   
   export const fetchProducts = async () => {
-    const response = await fetch(`${API_URL}/products`);
+    const response = await fetch(`/products`);
     if (!response.ok) {
       throw new Error('Failed to fetch products');
     }
@@ -51,7 +51,7 @@ export const login = async (data) => {
         per_page: perPage
     }).toString();
 
-    const response = await fetch(`${API_URL}/products?${queryParams}`);
+    const response = await fetch(`/products?${queryParams}`);
     if (!response.ok) {
         throw new Error('Failed to fetch products');
     }
@@ -59,7 +59,7 @@ export const login = async (data) => {
 }
 
 export async function fetchProduct(productId) {
-    const response = await fetch(`${API_URL}/products/${productId}`);
+    const response = await fetch(`/products/${productId}`);
     if (!response.ok) {
         throw new Error('Failed to fetch product details');
     }
@@ -68,7 +68,7 @@ export async function fetchProduct(productId) {
 
   
   export const fetchCartItems = async () => {
-    const response = await fetch(`${API_URL}/cart`, {
+    const response = await fetch(`/cart`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
@@ -80,7 +80,7 @@ export async function fetchProduct(productId) {
   };
   
   export const fetchOrderHistory = async () => {
-    const response = await fetch(`${API_URL}/orders`, {
+    const response = await fetch(`/orders`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
@@ -92,7 +92,7 @@ export async function fetchProduct(productId) {
   };
   
   export const fetchUserProfile = async () => {
-    const response = await fetch(`${API_URL}/profile`, {
+    const response = await fetch(`/profile`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
@@ -104,7 +104,7 @@ export async function fetchProduct(productId) {
   };
   
   export const updateUserProfile = async (data) => {
-    const response = await fetch(`${API_URL}/profile`, {
+    const response = await fetch(`/profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ export async function fetchProduct(productId) {
   };
   
   export const submitSupportRequest = async (data) => {
-    const response = await fetch(`${API_URL}/support`, {
+    const response = await fetch(`/support`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
