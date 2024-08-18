@@ -100,12 +100,13 @@ class Product(db.Model, SerializerMixin):
     orders = db.relationship('Order', back_populates='product', lazy=True)
     reviews = db.relationship('Review', back_populates='product', lazy=True)
     cart_items = db.relationship('CartItem', back_populates='product', lazy=True)
-    availability = db.Column(db.Boolean, default=True)
     category = db.relationship('Category', back_populates='products')
-    image_url = db.Column(db.String(200), nullable=False)
-    star = db.Column(db.Integer, default=0)
+    image_url = db.Column(db.String(200), nullable=True)
+    rating = db.Column(db.Integer, default=0)
+   
 
-    serialize_only = ('id', 'name', 'description', 'price', 'category', 'created_at', 'star')
+
+    serialize_only = ('id', 'name', 'description', 'price', 'category', 'created_at', 'rating')
 
     @validates('name')
     def validate_name(self, key, name):
@@ -124,9 +125,10 @@ class Product(db.Model, SerializerMixin):
             'description': self.description,
             'price': self.price,
             'imageUrl': self.image_url,
-            'star': self.star,
+            'rating': self.rating,
             'category': self.category,
             'created_at': self.created_at
+        
         }
 class Category(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)

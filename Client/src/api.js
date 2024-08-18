@@ -1,22 +1,32 @@
 ////////const API_URL = 'https://localhost:5555';
 
-
 export const login = async (data) => {
-    const response = await fetch(`/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+  const response = await fetch(`/login`, {
+    method: 'POST',
+    headers: {
+          'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
-    });
-  
-    if (!response.ok) {
+  });
+      // console.log('Login response:', result);
+
+  if (!response.ok) {
       throw new Error('Login failed');
-    }
+  }
+
+  const result = await response.json();
   
-    return response.json();
-  };
+  // Log the entire result to see if the token is included
   
+  // Save the access token to local storage
+  localStorage.setItem('token', result.access_token);
+  
+  // Log the token after saving to local storage
+  console.log('Saved token:', localStorage.getItem('token'));
+  
+  return result;
+};
+
   export const register = async (data) => {
     const response = await fetch(`/register`, {
       method: 'POST',
@@ -66,19 +76,49 @@ export async function fetchProduct(productId) {
     return response.json();
 }
 
+export const fetchCartItems = async () => {
+  const token = localStorage.getItem('token');
   
-  export const fetchCartItems = async () => {
-    const response = await fetch(`/cart`, {
+  if (!token) {
+      throw new Error('No token found, please log in again');
+  }
+
+  const response = await fetch(`/carts`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
       },
-    });
-    if (!response.ok) {
+  });
+
+  if (!response.ok) {
       throw new Error('Failed to fetch cart items');
-    }
-    return response.json();
-  };
-  
+  }
+
+  return response.json();
+};
+export const addToCart = async (productId, quantity) => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    throw new Error('No token found, please log in again');
+  }
+
+  const response = await fetch(`/cart`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ product_id: productId, quantity }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to add item to cart');
+  }
+
+  return response.json();
+};
+
+
   export const fetchOrderHistory = async () => {
     const response = await fetch(`/orders`, {
       headers: {

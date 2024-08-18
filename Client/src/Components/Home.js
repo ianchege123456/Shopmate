@@ -73,7 +73,7 @@ function SectionBelowHeader() {
               title={item.desc}
               price={item.price}
               rating={item.star}
-              image={item.image}
+              image={item.image_url}
             />
           ))}
       </div>

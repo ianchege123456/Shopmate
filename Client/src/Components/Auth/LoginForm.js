@@ -1,19 +1,22 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import { login } from '../../api'; // Import your login function
 
 function Login() {
-  const [username, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(""); // Added error state
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("/login", { username, password });
-      localStorage.setItem("token", response.data.token);
+      const response = await login({ username, password });
+      // Navigate to the desired route upon successful login
       navigate("/myaccount");
     } catch (error) {
+      // Handle login errors
+      setError("Login failed. Please check your credentials.");
       console.error("Login failed", error);
     }
   };
@@ -21,11 +24,6 @@ function Login() {
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        {/* <img
-          alt="Your Company"
-          src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-          className="mx-auto h-10 w-auto"
-        /> */}
         <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
           Sign in to your account
         </h2>
@@ -43,7 +41,7 @@ function Login() {
                 name="username"
                 type="text"
                 value={username}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 autoComplete="username"
                 placeholder="Username"
@@ -71,6 +69,8 @@ function Login() {
             </div>
           </div>
 
+          {error && <p className="text-red-500 text-sm">{error}</p>} {/* Error message display */}
+
           <div>
             <button
               type="submit"
@@ -83,9 +83,9 @@ function Login() {
 
         <p className="mt-10 text-center text-sm text-gray-500">
           Not a member?{' '}
-          <a href="#" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+          <Link to="/register" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
             Start a 14 day free trial
-          </a>
+          </Link>
         </p>
       </div>
     </div>

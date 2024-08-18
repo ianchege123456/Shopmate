@@ -16,8 +16,10 @@ from flask_login import LoginManager, login_required, login_user, logout_user, c
 app = Flask(__name__)
 
 # Get the DATABASE_URI from the environment variable
-database_uri = os.getenv('DATABASE_URI', 'postgresql://shopmate_bwbg_user:KsZRkRdSwBtbHiJ3LVSkle5v5LHA8zMg@dpg-cqoc95dsvqrc73feukd0-a.oregon-postgres.render.com/shopmate_bwbg')
+database_uri = os.getenv('DATABASE_URI', 'sqlite:///data.db')
 print(f'DATABASE_URI: {database_uri}')  # Debugging line to print the database URI
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'database_uri'
 
 # Configure the SQLAlchemy part of the app instance
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -126,7 +128,7 @@ def register():
     db.session.add(new_user)
     db.session.commit()
     
-    return jsonify({"msg": "User registered successfully"}), 201
+    return jsonify({"msg": "User registered successfully"}), 200
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -217,85 +219,64 @@ product_bp = Blueprint('products_bp', __name__)
 
 # products
 @app.route('/products', methods=['POST'])
-@jwt_required
 def create_product():
     data = request.get_json()
+    name = data.get('name')
+    description = data.get('description')
+    price = data.get('price')
+    category_id = data.get('category_id')
+    image_url = data.get('image_url')
+    rating  = data.get('rating')
+  
+    
+    if not image_url:
+        return jsonify({"error": "Image URL is required"}), 400
+    
     new_product = Product(
-        name=data['name'],
-        description=data['description'],
-        price=data['price'],
-        stock=data['stock'],
-        category_id=data['category_id']
+        name=name,
+        description=description,
+        price=price,
+        rating=rating,
+        category_id=category_id,
+        image_url=image_url
     )
     db.session.add(new_product)
     db.session.commit()
-    return jsonify(new_product.to_dict()), 201
+    
+    return jsonify({"message": "Product created successfully!"}), 201
 
 
+product_bp = Blueprint('products_bp', __name__)
 
-@product_bp.route('/products', methods=['GET'])
+@app.route('/products', methods=['GET'])
 def get_products():
-    
-    name = request.args.get('name')
-    category = request.args.get('category')
-    min_price = request.args.get('min_price')
-    max_price = request.args.get('max_price')
-    in_stock = request.args.get('in_stock')
-    sort_by = request.args.get('sort_by')
-    
+    # Query all products
+    products_query = Product.query.all()
 
-    query = Product.query.get_or_404(id)
-
-    if name:
-        query = query.filter(Product.name.ilike(f'%{name}%'))
-
-    if category:
-        query = query.join(Category).filter(Category.name == category)
-
-    if min_price:
-        query = query.filter(Product.price >= float(min_price))
-
-    if max_price:
-        query = query.filter(Product.price <= float(max_price))
-
-    if in_stock:
-        query = query.filter_by(availability=True)
-
-    if sort_by == 'price':
-        query = query.order_by(Product.price.asc())
-    elif sort_by == 'rating':
-        query = query.order_by(Product.rating.desc())
-    
-    page = int(request.args.get('page', 1))
-    per_page = 10
-    pagination = query.paginate(page, per_page, False)
-    
-    products = query.all()
-    
+    # Format the products data
     products = [{
         'id': product.id,
         'name': product.name,
         'description': product.description,
         'price': product.price,
-        'availability': product.availability,
-        'rating': product.star,
+        #'availability': produt.availability,
+        'rating': product.rating,  # Ensure this field exists
         'image_url': product.image_url,
-        'category': product.category.name
-    } for product in pagination.items]
+        'category': product.category.name if product.category else None
+    } for product in products_query]
 
     return jsonify({
         'products': products,
-        'total_pages': pagination.pages,
-        'current_page': pagination.page,
-        'total_products': pagination.total
+        'total_products': len(products)
     })
+
     
-@product_bp.route('/products/<int:id>', methods=['GET'])
+@app.route('/products/<int:id>', methods=['GET'])
 def get_product_details(id):
     product = Product.query.get_or_404(id)
     reviews = [{
         'content': review.content,
-        'rating': review.rating
+        #'rating': review.rating
     } for review in product.reviews]
 
     return jsonify({
@@ -304,14 +285,14 @@ def get_product_details(id):
         'description': product.description,
         'price': product.price,
         'image_url': product.image_url,
-        'star': product.star,
-        'category': product.category.name,
+        'star': product.rating,
+        #'category': product.category.name,
         'reviews': reviews,
         'average_rating': sum(review['rating'] for review in reviews) / len(reviews) if reviews else None
     })
 
 
-@product_bp.route('/products/<int:id>', methods=['PUT'])
+@app.route('/products/<int:id>', methods=['PUT'])
 @jwt_required
 def update_product(id):
     data = request.get_json()
@@ -325,7 +306,7 @@ def update_product(id):
     db.session.commit()
     return jsonify(product.to_dict()), 200
 
-@product_bp.route('/products/<int:id>', methods=['DELETE'])
+@app.route('/products/<int:id>', methods=['DELETE'])
 @jwt_required
 def delete_product(id):
     product = Product.query.get_or_404(id)
@@ -335,7 +316,7 @@ def delete_product(id):
 
 
 #categories
-@product_bp.route('/categories', methods=['POST'])
+@app.route('/categories', methods=['POST'])
 @jwt_required
 def create_category():
     data = request.get_json()
@@ -344,12 +325,12 @@ def create_category():
     db.session.commit()
     return jsonify(new_category.to_dict()), 201
 
-@product_bp.route('/categories', methods=['GET'])
+@app.route('/categories', methods=['GET'])
 def get_categories():
     categories = Category.query.all()
     return jsonify([category.to_dict() for category in categories]), 200
 
-@product_bp.route('/categories/<int:id>', methods=['PUT'])
+@app.route('/categories/<int:id>', methods=['PUT'])
 @jwt_required
 def update_category(id):
     data = request.get_json()
@@ -360,7 +341,7 @@ def update_category(id):
     db.session.commit()
     return jsonify(category.to_dict()), 200
 
-@product_bp.route('/categories/<int:id>', methods=['DELETE'])
+@app.route('/categories/<int:id>', methods=['DELETE'])
 @jwt_required
 def delete_category(id):
     category = Category.query.get(id)
@@ -372,7 +353,7 @@ def delete_category(id):
 
 
 # Reviews
-@product_bp.route('/products/<int:product_id>/reviews', methods=['POST'])
+@app.route('/products/<int:product_id>/reviews', methods=['POST'])
 def create_review(product_id):
     product = Product.query.get_or_404(id)
     data = request.get_json()
@@ -381,7 +362,7 @@ def create_review(product_id):
     db.session.commit()
     return jsonify(new_review.to_dict()), 201
 
-@product_bp.route('/products/<int:product_id>/reviews', methods=['GET'])
+@app.route('/products/<int:product_id>/reviews', methods=['GET'])
 def get_reviews(product_id):
     reviews = Review.query.filter_by(product_id=product_id).all()
     return jsonify([review.to_dict() for review in reviews]), 200
@@ -390,7 +371,7 @@ def get_reviews(product_id):
 carts_bp = Blueprint('carts_bp', __name__)
 
 # View cart items  
-@carts_bp.route('/carts', methods=['GET'])
+@app.route('/carts', methods=['GET'])
 @jwt_required
 def view_cart():
     user_id = get_jwt_identity()
@@ -398,7 +379,7 @@ def view_cart():
     return jsonify([item.to_dict() for item in cart_items]), 200
 
 # Add item to cart
-@carts_bp.route('/cart', methods=['POST'])
+@app.route('/cart', methods=['POST'])
 @jwt_required
 def add_to_cart():
     data = request.get_json()
@@ -417,7 +398,7 @@ def add_to_cart():
     return jsonify(cart_item.to_dict()), 201
 
 # Update item quantity in cart
-@carts_bp.route('/cart/<int:product_id>', methods=['PUT'])
+@app.route('/cart/<int:product_id>', methods=['PUT'])
 @jwt_required
 def update_cart(product_id):
     data = request.get_json()
@@ -428,7 +409,7 @@ def update_cart(product_id):
     return jsonify(cart_item.to_dict()), 200
 
 # Remove item from cart
-@carts_bp.route('/cart/<int:product_id>', methods=['DELETE'])
+@app.route('/cart/<int:product_id>', methods=['DELETE'])
 @jwt_required
 def remove_from_cart(product_id):
     user_id = get_jwt_identity()
