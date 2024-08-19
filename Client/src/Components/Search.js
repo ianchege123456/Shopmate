@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './ProductCatalog.css';
+
 
 function ProductCatalog() {
     const [products, setProducts] = useState([]);
