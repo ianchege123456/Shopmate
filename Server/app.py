@@ -154,7 +154,7 @@ def logout():
 def profile():
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)
-    return jsonify(username=user.username, email=user.email, preferences=user.preferences), 200
+    return jsonify(username=user.username, email=user.email, preferences=user.preferences, orders=user.orders), 200
 
 @app.route('/profile', methods=['PUT'])
 @jwt_required

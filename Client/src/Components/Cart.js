@@ -1,25 +1,42 @@
 import React from 'react';
-import { useCart } from '../context/CartContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-const Cart = () => {
-  const { cart, removeFromCart } = useCart();
+function Cart({ cartItems, onRemove, onCheckout }) {
+  const navigate = useNavigate();
+
+  const handleRemove = (id) => {
+    onRemove(id);
+  };
+
+  const handleCheckout = () => {
+    onCheckout();
+  };
+
+  const getTotal = () => {
+    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  };
+
+  if (cartItems.length === 0) {
+    return <p>Your cart is empty</p>;
+  }
 
   return (
     <div>
-      <h1>Shopping Cart</h1>
+      <h2>Your Cart</h2>
       <ul>
-        {cart.map(item => (
+        {cartItems.map(item => (
           <li key={item.id}>
-            <h3>{item.name}</h3>
-            <p>${item.price}</p>
-            <button onClick={() => removeFromCart(item.id)}>Remove</button>
+            <img src={item.imageUrl} alt={item.name} width="50" />
+            <span>{item.name}</span>
+            <span>{item.price} x {item.quantity}</span>
+            <button onClick={() => handleRemove(item.id)}>Remove</button>
           </li>
         ))}
       </ul>
-      <Link to="/checkout">Proceed to Checkout</Link>
+      <h3>Total: ${getTotal()}</h3>
+      <button onClick={handleCheckout}>Checkout</button>
     </div>
   );
-};
+}
 
 export default Cart;

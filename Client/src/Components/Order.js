@@ -1,22 +1,26 @@
-import React from "react";
+import React from 'react';
 
-const OrderConfirmation = ({ order }) => {
+function OrderSummary({ order }) {
   return (
-    <div className="order-confirmation">
-      <h2>Thank you for your order!</h2>
-      <p>Your order number is: {order.id}</p>
-      <div className="order-summary">
-        <h3>Order Summary</h3>
-        {order.items.map((item) => (
-          <div key={item.id} className="order-item">
-            <p>{item.name}</p>
-            <p>{item.quantity} x ${item.price}</p>
-          </div>
-        ))}
-      </div>
+    <div>
+      <h2>Order Summary</h2>
+      <p>Order ID: {order.id}</p>
       <p>Total: ${order.total}</p>
+      <p>Status: {order.status}</p>
+      <h3>Shipping Details</h3>
+      <p>{order.shippingDetails.address}</p>
+      <p>{order.shippingDetails.city}</p>
+      <p>{order.shippingDetails.postalCode}</p>
+      <h3>Items</h3>
+      <ul>
+        {order.items.map(item => (
+          <li key={item.id}>
+            <span>{item.name}</span> - <span>{item.quantity} x ${item.price}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
-};
+}
 
-export default OrderConfirmation;
+export default OrderSummary;

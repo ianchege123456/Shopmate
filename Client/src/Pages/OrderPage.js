@@ -1,13 +1,23 @@
-import React from 'react'
-import CheckOut from '../Components/Checkout'
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import Order from '../Components/Order';
+import { fetchOrder } from '../services/orderService';
 
 function OrderPage() {
-  return (
-    <div className="container">
-        <CheckOut />
-    
-    </div>
-  )
+  const { id } = useParams();
+  const [order, setOrder] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await fetchOrder(id);
+      setOrder(data);
+    };
+    fetchData();
+  }, [id]);
+
+  if (!order) return <p>Loading...</p>;
+
+  return <Order order={order} />;
 }
 
-export default OrderPage
+export default OrderPage;

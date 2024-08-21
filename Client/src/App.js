@@ -7,6 +7,7 @@ import ProductDetail from './Components/ProductDetail';
 import Home from './Components/Home';
 import RegisterForm from './Components/Auth/RegisterForm';
 import LoginForm from './Components/Auth/LoginForm';
+import Cart from './Components/Cart';
 import CartPage from './Pages/CartPage';
 // import OrderPage from './Pages/OrderPage';
 import Checkout from './Components/Checkout';
@@ -25,6 +26,7 @@ function App() {
             
             <Route path="/register" element={<RegisterForm />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/Cart" element={<Cart />} />
             <Route path="/CartPage" element={<CartPage />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/products/:id" element={<ProductDetail />} />

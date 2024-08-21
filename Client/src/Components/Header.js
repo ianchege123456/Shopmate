@@ -97,7 +97,7 @@ function Header() {
                     <HelpOutlineIcon />
                     <span>Help</span>
                 </Link>
-                <Link to="/CartPage" className='flex items-center space-x-1 text-gray-700'>
+                <Link to="/Checkout" className='flex items-center space-x-1 text-gray-700'>
                     <ShoppingCartIcon />
                     <span>{basket?.length}</span>
                 </Link>

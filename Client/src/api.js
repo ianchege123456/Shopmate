@@ -77,24 +77,10 @@ export async function fetchProduct(productId) {
 }
 
 export const fetchCartItems = async () => {
-  const token = localStorage.getItem('token');
-  
-  if (!token) {
-      throw new Error('No token found, please log in again');
-  }
-
-  const response = await fetch(`/carts`, {
-      headers: {
-          'Authorization': `Bearer ${token}`,
-      },
-  });
-
-  if (!response.ok) {
-      throw new Error('Failed to fetch cart items');
-  }
-
-  return response.json();
+  const response = await fetch('/cart');
+  return await response.json();
 };
+
 export const addToCart = async (productId, quantity) => {
   const token = localStorage.getItem('token');
 
@@ -116,6 +102,14 @@ export const addToCart = async (productId, quantity) => {
   }
 
   return response.json();
+};
+
+export const removeFromCart = async (id) => {
+  await fetch(`/cart/${id}`, { method: 'DELETE' });
+};
+
+export const clearCart = async () => {
+  await fetch('/cart', { method: 'DELETE' });
 };
 
 
